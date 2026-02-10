@@ -114,13 +114,13 @@ function hasKey(key) {
 }
 
 function getProject() {
-  const { title, html, css, js, snapshots } = localStorage;
-  return { title, snapshots };
+  const { uuid, title, html, css, js, snapshots } = localStorage;
+  return { title, uuid, snapshots };
 }
 
 function saveProject() {
-  const { title, snapshots } = getProject();
-  const file = new File([snapshots], `${title}.json`, { type: "text/json" });
+  const project = getProject();
+  const file = new File([JSON.stringify(project)], `${project.title}.json`, { type: "text/json" });
   saveFile(file);
 }
 
