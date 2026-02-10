@@ -79,6 +79,13 @@ function setProjectSaverDisabled(bool) {
   projectSaver.disabled = bool;
 }
 
+let uuid = getKey("uuid");
+
+if (!uuid) {
+  uuid = crypto.randomUUID();
+  saveKey("uuid", uuid);
+}
+
 const editors = [...document.querySelectorAll("[data-state]")];
 
 for (const editor of editors) {
