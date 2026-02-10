@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+
+<title>Frontenditor</title>
+<meta charset="UTF-8">
+<meta name="color-scheme" content="light dark">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+  html {
+    height: 100%;
+  }
+  body {
+    margin: 0;
+    padding: 16px;
+    height: 100%;
+    font-family: sans-serif;
+  }
+  h1 {
+    margin: 0;
+    margin-bottom: 16px;
+  }
+  input, textarea {
+    padding: 6px;
+    color: white;
+    font-size: 13px;
+    font-family: "Consolas", monospace;
+  }
+  ::placeholder {
+    color: inherit;
+    opacity: 0.55;
+  }
+  textarea {
+    width: calc(33% - 3px);
+    height: calc(50% - 45px);
+    resize: none;
+  }
+  iframe {
+    width: 100%;
+    height: calc(50% - 45px);
+    background-color: white;
+  }
+</style>
+
+</head>
+
+<body>
+
+<header>
+<h1>Frontenditor</h1>
+<input id="titleEditor" data-state="title" type="text" placeholder="<title>">
+<button id="snapshotter">Create Snapshot</button>
+</header>
+
+<textarea id="htmlEditor" data-state="html" placeholder="<html>" wrap="off"></textarea>
+<textarea id="cssEditor" data-state="css" placeholder="<css>" wrap="off"></textarea>
+<textarea id="jsEditor" data-state="js" placeholder="<js>" wrap="off"></textarea>
+<iframe id="appView" src="about:blank"></iframe>
+
+<script>
+snapshotter.addEventListener("click", () => {
+  const snapshot = createSnapshot();
+  saveSnapshot(snapshot);
+});
+
+const editors = [...document.querySelectorAll("[data-state]")];
+
+for (const editor of editors) {
+  editor.value = getKey(editor.dataset.state);
+  const saveKeyDebounce = debounce(saveKey, 1000);
+  editor.addEventListener("input", event => editorInputHandler(event, saveKeyDebounce));
+}
+
+updateAppView();
+
+function editorInputHandler(event, saveKey) {
+  updateAppView();
+  saveKey(event.currentTarget.dataset.state, event.currentTarget.value);
+}
+
+function getKey(key) {
+  return localStorage.getItem(key);
+}
+
+function saveKey(key, value) {
+  localStorage.setItem(key, value);
+}
+
+function createSnapshot() {
+  const date = createSnapshotDate();
+  const { title = "", html = "", css = "", js = "" } = localStorage;
+  return { ...date, title, html, css, js };
+}
+
+function createSnapshotDate() {
+  const now = new Date();
+  const authorDate = now.toISOString();
+  const timezoneOffset = -now.getTimezoneOffset();
+  return { authorDate, timezoneOffset };
+}
+
+function getSnapshots() {
+  return JSON.parse(getKey("snapshots")) ?? [];
+}
+
+function saveSnapshot(snapshot) {
+  const snapshots = getSnapshots();
+  snapshots.push(snapshot);
+  saveSnapshots(snapshots);
+}
+
+function saveSnapshots(snapshots) {
+  saveKey("snapshots", JSON.stringify(snapshots));
+}
+
+function bundleApp(title, html, css, js) {
+  return `\
+<!DOCTYPE html>
+<html>
+<head>
+<title>${title}</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+${css}
+</style>
+</head>
+<body>
+${html}
+<script>
+${js}
+<\/script>
+</body>
+</html>
+`;
+}
+
+function renderApp(content) {
+  const { contentDocument } = appView;
+  contentDocument.open();
+  contentDocument.write(content);
+  contentDocument.close();
+}
+
+function updateAppView() {
+  const bundle = bundleApp(...editors.map(editor => editor.value));
+  renderApp(bundle);
+}
+
+function debounce(func, delay) {
+  let timeoutId;
+
+  return function(...args) {
+    clearTimeout(timeoutId);
+
+    timeoutId = setTimeout(() => {
+      func.apply(this, args);
+    }, delay);
+  };
+}
+</script>
+
+</body>
+
+</html>
