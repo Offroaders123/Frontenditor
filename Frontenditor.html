@@ -107,13 +107,13 @@ function hasKey(key) {
 }
 
 function getProject() {
-  const { snapshots } = localStorage;
-  return snapshots;
+  const { title, html, css, js, snapshots } = localStorage;
+  return { title, snapshots };
 }
 
 function saveProject() {
-  const project = getProject();
-  const file = new File([project], `${project.title}.json`, { type: "text/json" });
+  const { title, snapshots } = getProject();
+  const file = new File([snapshots], `${title}.json`, { type: "text/json" });
   saveFile(file);
 }
 
