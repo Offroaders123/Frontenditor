@@ -55,6 +55,7 @@
 <h1>Frontenditor</h1>
 <input id="titleEditor" data-state="title" type="text" placeholder="<title>">
 <button id="snapshotter">Create Snapshot</button>
+<button id="projectSaver">Save Project</button>
 </header>
 
 <textarea id="htmlEditor" data-state="html" placeholder="<html>" wrap="off"></textarea>
@@ -67,6 +68,16 @@ snapshotter.addEventListener("click", () => {
   const snapshot = createSnapshot();
   saveSnapshot(snapshot);
 });
+
+projectSaver.addEventListener("click", saveProject);
+
+if (!hasKey("snapshots")) {
+  setProjectSaverDisabled(true);
+}
+
+function setProjectSaverDisabled(bool) {
+  projectSaver.disabled = bool;
+}
 
 const editors = [...document.querySelectorAll("[data-state]")];
 
@@ -91,6 +102,30 @@ function saveKey(key, value) {
   localStorage.setItem(key, value);
 }
 
+function hasKey(key) {
+  return key in localStorage;
+}
+
+function getProject() {
+  const { snapshots } = localStorage;
+  return snapshots;
+}
+
+function saveProject() {
+  const project = getProject();
+  const file = new File([project], `${project.title}.json`, { type: "text/json" });
+  saveFile(file);
+}
+
+function saveFile(file) {
+  const a = document.createElement("a");
+  const blob = URL.createObjectURL(file);
+  a.href = blob;
+  a.download = file.name;
+  a.click();
+  URL.revokeObjectURL(blob);
+}
+
 function createSnapshot() {
   const date = createSnapshotDate();
   const { title = "", html = "", css = "", js = "" } = localStorage;
@@ -112,6 +147,7 @@ function saveSnapshot(snapshot) {
   const snapshots = getSnapshots();
   snapshots.push(snapshot);
   saveSnapshots(snapshots);
+  setProjectSaverDisabled(false);
 }
 
 function saveSnapshots(snapshots) {
